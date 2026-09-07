@@ -5,6 +5,8 @@ import logging
 import os
 import time
 from urllib.parse import parse_qsl
+from fastapi.responses import HTMLResponse
+
 
 from aiogram import Bot, Dispatcher, F
 from aiogram.filters import Command
@@ -196,6 +198,10 @@ async def miniapp_open(data: MiniAppRequest):
         "status": "ok",
     }
 
+@app.get("/webapp", response_class=HTMLResponse)
+async def serve_webapp():
+    with open("index.html", "r", encoding="utf-8") as f:
+        return f.read()
 
 # ==========================================
 # Telegram Bot
