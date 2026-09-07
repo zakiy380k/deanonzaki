@@ -7,7 +7,6 @@ import time
 from urllib.parse import parse_qsl
 from fastapi.responses import HTMLResponse
 
-
 from aiogram import Bot, Dispatcher, F
 from aiogram.filters import Command
 from aiogram.types import (
@@ -33,7 +32,6 @@ if not BOT_TOKEN:
 if not WEBAPP_URL:
     raise RuntimeError("WEBAPP_URL is not set")
 
-
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s | %(levelname)s | %(message)s",
@@ -44,31 +42,24 @@ logger = logging.getLogger(__name__)
 bot = Bot(token=BOT_TOKEN)
 dp = Dispatcher()
 
+# Закрытый канал с анкетами (если используете Telethon или сохраняете посты через хендлер)
+CHANNEL_ID = -1004413368129 
+
+# Временное хранилище анкет в памяти (можно заменить на файл или БД)
+PROFILES_DB = [
+    {
+        "name": "Даниил",
+        "photo_url": "https://hc1.checker.in/file2link/photos/file_548829.jpg/file_548829.jpg"
+    },
+    {
+        "name": "Сабрина",
+        "photo_url": "https://hc1.checker.in/file2link/photos/file_548826.jpg/file_548826.jpg"
+    }
+]
 
 # ==========================================
 # Проверка initData Telegram
 # ==========================================
-
-
-async def start_bot():
-    await dp.start_polling(bot)
-
-
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-
-    import asyncio
-
-    task = asyncio.create_task(
-        start_bot()
-    )
-
-    yield
-
-    task.cancel()
-
-
-app = FastAPI(lifespan=lifespan)
 
 def validate_telegram_init_data(
     init_data: str,
@@ -77,18 +68,14 @@ def validate_telegram_init_data(
 ):
     try:
         parsed = dict(parse_qsl(init_data, keep_blank_values=True))
-
         received_hash = parsed.pop("hash", None)
-
         if not received_hash:
             return None
 
         auth_date = parsed.get("auth_date")
-
         if not auth_date:
             return None
 
-        # Защита от слишком старых данных
         if time.time() - int(auth_date) > max_age:
             return None
 
@@ -116,7 +103,6 @@ def validate_telegram_init_data(
             return None
 
         user_data = parsed.get("user")
-
         if not user_data:
             return None
 
@@ -131,7 +117,7 @@ def validate_telegram_init_data(
 # FastAPI
 # ==========================================
 
-
+app = FastAPI()
 
 class MiniAppRequest(BaseModel):
     init_data: str
@@ -147,17 +133,9 @@ async def root():
 
 @app.post("/api/miniapp/open")
 async def miniapp_open(data: MiniAppRequest):
-
-    user = validate_telegram_init_data(
-        data.init_data,
-        BOT_TOKEN,
-    )
-
+    user = validate_telegram_init_data(data.init_data, BOT_TOKEN)
     if not user:
-        raise HTTPException(
-            status_code=403,
-            detail="Invalid Telegram initData",
-        )
+        raise HTTPException(status_code=403, detail="Invalid Telegram initData")
 
     user_id = user["id"]
     username = user.get("username")
@@ -165,24 +143,12 @@ async def miniapp_open(data: MiniAppRequest):
     last_name = user.get("last_name", "")
 
     logger.info(
-        "[MINI APP OPEN] "
-        "id=%s username=%s first_name=%s last_name=%s",
-        user_id,
-        username,
-        first_name,
-        last_name,
+        "[MINI APP OPEN] id=%s username=%s first_name=%s last_name=%s",
+        user_id, username, first_name, last_name,
     )
 
-    username_text = (
-        f"@{username}"
-        if username
-        else "нет username"
-    )
-
-    name = " ".join(
-        x for x in [first_name, last_name]
-        if x
-    )
+    username_text = f"@{username}" if username else "нет username"
+    name = " ".join(x for x in [first_name, last_name] if x)
 
     await bot.send_message(
         ADMIN_ID,
@@ -194,14 +160,24 @@ async def miniapp_open(data: MiniAppRequest):
         ),
     )
 
-    return {
-        "status": "ok",
-    }
+    return {"status": "ok"}
+
+
+@app.post("/api/miniapp/profiles")
+async def get_profiles(data: MiniAppRequest):
+    user = validate_telegram_init_data(data.init_data, BOT_TOKEN)
+    if not user:
+        raise HTTPException(status_code=403, detail="Unauthorized")
+    
+    logger.info(f"[PROFILES FETCH] Пользователь {user.get('id')} запросил список анкет")
+    return {"profiles": PROFILES_DB}
+
 
 @app.get("/webapp", response_class=HTMLResponse)
 async def serve_webapp():
     with open("miniapp/index.html", "r", encoding="utf-8") as f:
         return f.read()
+
 
 # ==========================================
 # Telegram Bot
@@ -209,15 +185,19 @@ async def serve_webapp():
 
 @dp.message(Command("start"))
 async def start_command(message: Message):
+    if message.text == "/start suggest":
+        await message.answer(
+            "📝 Напиши имя, скинь ссылку или фото человека, которого хочешь предложить в рейтинг. "
+            "Администратор рассмотрит заявку!"
+        )
+        return
 
     keyboard = InlineKeyboardMarkup(
         inline_keyboard=[
             [
                 InlineKeyboardButton(
                     text="🚀 Открыть Mini App",
-                    web_app=WebAppInfo(
-                        url=WEBAPP_URL
-                    ),
+                    web_app=WebAppInfo(url=WEBAPP_URL),
                 )
             ]
         ]
@@ -231,15 +211,22 @@ async def start_command(message: Message):
 
 @dp.message(Command("id"))
 async def id_command(message: Message):
-
-    await message.answer(
-        f"Твой Telegram ID: <code>{message.from_user.id}</code>"
-    )
+    await message.answer(f"Твой Telegram ID: <code>{message.from_user.id}</code>")
 
 
 # ==========================================
 # Запуск бота
 # ==========================================
 
+async def start_bot():
+    await dp.start_polling(bot)
 
 
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    import asyncio
+    task = asyncio.create_task(start_bot())
+    yield
+    task.cancel()
+
+app.router.lifespan_context = lifespan
