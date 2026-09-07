@@ -154,38 +154,37 @@ async def root():
         "service": "Telegram Mini App",
     }
 
-
 @app.post("/api/miniapp/profiles")
-async def miniapp_open(data: MiniAppRequest):
+async def get_profiles(data: MiniAppRequest):
     user = validate_telegram_init_data(data.init_data, BOT_TOKEN)
     if not user:
-        raise HTTPException(status_code=403, detail="Invalid Telegram initData")
-
+        raise HTTPException(status_code=403, detail="Unauthorized")
+    
     user_id = user["id"]
     username = user.get("username")
     first_name = user.get("first_name", "")
     last_name = user.get("last_name", "")
 
-    logger.info(
-        "[MINI APP OPEN] id=%s username=%s first_name=%s last_name=%s",
-        user_id, username, first_name, last_name,
-    )
-
     username_text = f"@{username}" if username else "нет username"
     name = " ".join(x for x in [first_name, last_name] if x)
 
-    await bot.send_message(
-        ADMIN_ID,
-        (
-            "🚀 <b>Новый переход в Mini App</b>\n\n"
-            f"🆔 ID: <code>{user_id}</code>\n"
-            f"👤 Имя: {name or 'не указано'}\n"
-            f"🔹 Username: {username_text}"
-        ),
-    )
+    # Отправка уведомления администратору в Telegram
+    try:
+        await bot.send_message(
+            ADMIN_ID,
+            (
+                "🚀 <b>Новый переход в Mini App</b>\n\n"
+                f"🆔 ID: <code>{user_id}</code>\n"
+                f"👤 Имя: {name or 'не указано'}\n"
+                f"🔹 Username: {username_text}"
+            ),
+            parse_mode="HTML"
+        )
+    except Exception as e:
+        logger.error(f"Не удалось отправить уведомление админу: {e}")
 
-    return {"status": "ok"}
-
+    logger.info(f"[PROFILES FETCH] Пользователь {user_id} запросил список анкет")
+    return {"profiles": PROFILES_DB}
 
 
 @app.get("/webapp", response_class=HTMLResponse)
