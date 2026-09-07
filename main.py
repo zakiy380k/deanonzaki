@@ -155,7 +155,7 @@ async def root():
     }
 
 
-@app.post("/api/miniapp/open")
+@app.post("/api/miniapp/profiles")
 async def miniapp_open(data: MiniAppRequest):
     user = validate_telegram_init_data(data.init_data, BOT_TOKEN)
     if not user:
@@ -186,15 +186,6 @@ async def miniapp_open(data: MiniAppRequest):
 
     return {"status": "ok"}
 
-
-@app.post("/api/miniapp/profiles")
-async def get_profiles(data: MiniAppRequest):
-    user = validate_telegram_init_data(data.init_data, BOT_TOKEN)
-    if not user:
-        raise HTTPException(status_code=403, detail="Unauthorized")
-    
-    logger.info(f"[PROFILES FETCH] Пользователь {user.get('id')} запросил список анкет")
-    return {"profiles": PROFILES_DB}
 
 
 @app.get("/webapp", response_class=HTMLResponse)
