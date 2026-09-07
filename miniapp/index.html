@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Mini App</title>
+
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+    <style>
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            padding: 20px;
+
+            font-family:
+                Arial,
+                sans-serif;
+
+            background: var(--tg-theme-bg-color);
+            color: var(--tg-theme-text-color);
+        }
+
+        .container {
+            max-width: 500px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            margin-bottom: 10px;
+        }
+
+        .card {
+            padding: 20px;
+            border-radius: 16px;
+
+            background:
+                var(--tg-theme-secondary-bg-color);
+        }
+
+        .status {
+            margin-top: 15px;
+
+            color:
+                var(--tg-theme-hint-color);
+        }
+
+    </style>
+
+</head>
+
+<body>
+
+<div class="container">
+
+    <h1>Tracker</h1>
+
+    <div class="card">
+
+        <div id="greeting">
+            Загрузка...
+        </div>
+
+        <div
+            class="status"
+            id="status"
+        >
+            Подключение...
+        </div>
+
+    </div>
+
+</div>
+
+
+<script>
+
+    const tg = window.Telegram.WebApp;
+
+    tg.ready();
+
+    tg.expand();
+
+
+    async function init() {
+
+        const user = tg.initDataUnsafe?.user;
+
+        if (!user) {
+
+            document.getElementById("greeting").textContent =
+                "Откройте приложение через Telegram";
+
+            document.getElementById("status").textContent =
+                "Telegram user data не найдены";
+
+            return;
+        }
+
+
+        const name =
+            [
+                user.first_name,
+                user.last_name
+            ]
+            .filter(Boolean)
+            .join(" ");
+
+
+        document.getElementById("greeting").textContent =
+            `Привет, ${name || "пользователь"}!`;
+
+
+        try {
+
+            const response = await fetch(
+                "/api/miniapp/open",
+                {
+                    method: "POST",
+
+                    headers: {
+                        "Content-Type":
+                            "application/json"
+                    },
+
+                    body: JSON.stringify({
+                        init_data: tg.initData
+                    })
+                }
+            );
+
+
+            if (!response.ok) {
+
+                throw new Error(
+                    "Server returned " +
+                    response.status
+                );
+
+            }
+
+
+            document.getElementById("status").textContent =
+                "Готово";
+
+
+        } catch (error) {
+
+            console.error(error);
+
+            document.getElementById("status").textContent =
+                "Ошибка подключения";
+
+        }
+
+    }
+
+
+    init();
+
+</script>
+
+</body>
+
+</html>     
