@@ -47,6 +47,27 @@ dp = Dispatcher()
 # Проверка initData Telegram
 # ==========================================
 
+
+async def start_bot():
+    await dp.start_polling(bot)
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+
+    import asyncio
+
+    task = asyncio.create_task(
+        start_bot()
+    )
+
+    yield
+
+    task.cancel()
+
+
+app = FastAPI(lifespan=lifespan)
+
 def validate_telegram_init_data(
     init_data: str,
     bot_token: str,
@@ -108,7 +129,6 @@ def validate_telegram_init_data(
 # FastAPI
 # ==========================================
 
-app = FastAPI()
 
 
 class MiniAppRequest(BaseModel):
@@ -215,22 +235,5 @@ async def id_command(message: Message):
 # Запуск бота
 # ==========================================
 
-async def start_bot():
-    await dp.start_polling(bot)
 
 
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-
-    import asyncio
-
-    task = asyncio.create_task(
-        start_bot()
-    )
-
-    yield
-
-    task.cancel()
-
-
-app.router.lifespan_context = lifespan
