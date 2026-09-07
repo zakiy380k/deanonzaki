@@ -2,108 +2,139 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Рейтинг Днепра</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        * { box-sizing: border-box; }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         body {
             margin: 0;
             padding: 15px;
-            font-family: Arial, sans-serif;
-            background: var(--tg-theme-bg-color, #0f172a);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background: var(--tg-theme-bg-color, #0b0f19);
             color: var(--tg-theme-text-color, #fff);
             display: flex;
             flex-direction: column;
             align-items: center;
+            min-height: 100vh;
         }
         .container {
             max-width: 400px;
             width: 100%;
             text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
         }
-        h1 { font-size: 20px; margin-bottom: 5px; }
-        .subtitle { font-size: 13px; color: #94a3b8; margin-bottom: 15px; }
+        h1 { font-size: 22px; margin: 5px 0; font-weight: 800; letter-spacing: -0.5px; }
+        .subtitle { font-size: 13px; color: #94a3b8; margin-bottom: 20px; }
         
+        /* Карточка с эффектом тени */
         .card {
-            background: var(--tg-theme-secondary-bg-color, #1e293b);
-            border-radius: 20px;
+            width: 100%;
+            height: 420px;
+            background: #1e293b;
+            border-radius: 24px;
             overflow: hidden;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
-            margin-bottom: 15px;
+            position: relative;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.4);
+            margin-bottom: 20px;
+            transition: transform 0.3s ease, opacity 0.3s ease;
+        }
+        .card.slide-out {
+            transform: scale(0.9) translateY(-20px);
+            opacity: 0;
         }
         .photo-container {
             width: 100%;
-            height: 340px;
+            height: 100%;
             background: #000;
+            position: relative;
         }
         .photo-container img {
             width: 100%;
             height: 100%;
             object-fit: cover;
         }
-        .info {
-            padding: 15px;
-            font-size: 18px;
-            font-weight: bold;
-        }
         
-        /* Блок 5 кнопок оценки */
+        /* Стеклянная плашка для имени поверх фото */
+        .info-overlay {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 25px 20px 20px;
+            background: linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0) 100%);
+            backdrop-filter: blur(4px);
+            text-align: left;
+        }
+        .user-name {
+            font-size: 22px;
+            font-weight: 700;
+            color: #fff;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+        }
+
+        /* 5 кнопок оценки */
         .rating-buttons {
             display: flex;
-            gap: 6px;
-            justify-content: center;
-            margin-bottom: 15px;
+            gap: 8px;
+            width: 100%;
+            margin-bottom: 12px;
         }
         .rate-btn {
             flex: 1;
-            padding: 12px 0;
+            padding: 14px 0;
             border: none;
-            border-radius: 10px;
-            font-size: 16px;
-            font-weight: bold;
+            border-radius: 14px;
+            font-size: 17px;
+            font-weight: 700;
             cursor: pointer;
             color: #fff;
-            transition: transform 0.1s;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            transition: transform 0.1s, filter 0.2s;
         }
-        .rate-btn:active { transform: scale(0.92); }
+        .rate-btn:active { transform: scale(0.92); filter: brightness(1.2); }
         .rate-btn:nth-child(1) { background: #ef4444; }
         .rate-btn:nth-child(2) { background: #f97316; }
-        .rate-btn:nth-child(3) { background: #eab308; }
+        .rate-btn:nth-child(3) { background: #eab308; color: #000; }
         .rate-btn:nth-child(4) { background: #84cc16; }
         .rate-btn:nth-child(5) { background: #22c55e; }
 
+        /* Кнопка предложить человека */
         .suggest-btn {
             width: 100%;
             padding: 14px;
-            border: 2px dashed #38bdf8;
-            border-radius: 12px;
-            background: transparent;
+            border: 2px dashed rgba(56, 189, 248, 0.5);
+            border-radius: 14px;
+            background: rgba(56, 189, 248, 0.05);
             color: #38bdf8;
             font-size: 15px;
-            font-weight: bold;
+            font-weight: 600;
             cursor: pointer;
-            transition: background 0.2s, color 0.2s;
+            transition: all 0.2s;
         }
         .suggest-btn:hover {
-            background: #38bdf8;
-            color: #0f172a;
+            background: rgba(56, 189, 248, 0.15);
+            border-color: #38bdf8;
         }
 
-        .counter { font-size: 12px; color: #64748b; margin-top: 10px; }
+        .counter { font-size: 12px; color: #64748b; margin-top: 12px; font-weight: 500; }
     </style>
 </head>
 <body>
 
 <div class="container">
     <h1>🔥 Народный Рейтинг</h1>
-    <div class="subtitle">Оценивай анкеты от 1 до 5</div>
+    <div class="subtitle">Днепр под прицелом</div>
     
     <div class="card" id="card">
         <div class="photo-container">
             <img id="user-photo" src="" alt="Загрузка...">
+            <div class="info-overlay">
+                <div class="user-name" id="user-name">Загрузка анкет...</div>
+            </div>
         </div>
-        <div class="info" id="user-name">Загрузка анкет...</div>
     </div>
 
     <!-- 5 кнопок оценки -->
@@ -130,7 +161,6 @@
 
     async function initApp() {
         try {
-            // Отправляем лог об открытии и одновременно забираем список анкет с бэкенда
             const res = await fetch("/api/miniapp/profiles", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -145,16 +175,16 @@
             renderProfile();
         } catch (e) {
             console.error(e);
-            document.getElementById("user-name").textContent = "Ошибка загрузки данных";
+            document.getElementById("user-name").textContent = "Ошибка связи с сервером";
         }
     }
 
     function renderProfile() {
         if (profiles.length === 0 || currentIndex >= profiles.length) {
             document.getElementById("card").innerHTML = `
-                <div style="padding: 40px; text-align: center;">
-                    <h2>Анкеты закончились! 🎉</h2>
-                    <p style="font-size: 14px; color: #94a3b8;">Итоги скоро в канале. Предлагай новых людей кнопкой ниже!</p>
+                <div style="padding: 60px 20px; text-align: center; height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center;">
+                    <h2 style="margin-bottom: 10px;">Всё просмотрено! 🎉</h2>
+                    <p style="font-size: 14px; color: #94a3b8; line-height: 1.5;">Итоги скоро появятся в канале. Предлагай новых кандидатов кнопкой ниже!</p>
                 </div>`;
             document.getElementById("action-buttons").style.display = "none";
             document.getElementById("counter").style.display = "none";
@@ -168,12 +198,18 @@
     }
 
     function rate(score) {
-        currentIndex++;
-        renderProfile();
+        const card = document.getElementById("card");
+        // Плавная анимация смены карточки
+        card.classList.add("slide-out");
+        
+        setTimeout(() => {
+            currentIndex++;
+            renderProfile();
+            card.classList.remove("slide-out");
+        }, 200);
     }
 
     function suggestPerson() {
-        // Замените YOUR_BOT_USERNAME на реальный юзернейм вашего бота (без @)
         tg.openTelegramLink("https://t.me/YOUR_BOT_USERNAME?start=suggest");
     }
 
