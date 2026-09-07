@@ -1,176 +1,184 @@
 <!DOCTYPE html>
 <html lang="ru">
-
 <head>
-
     <meta charset="UTF-8">
-
-    <meta
-        name="viewport"
-        content="width=device-width, initial-scale=1.0"
-    >
-
-    <title>Mini App</title>
-
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Рейтинг Днепра</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-
     <style>
-
-        * {
-            box-sizing: border-box;
-        }
-
+        * { box-sizing: border-box; }
         body {
             margin: 0;
-            padding: 20px;
-
-            font-family:
-                Arial,
-                sans-serif;
-
-            background: var(--tg-theme-bg-color);
-            color: var(--tg-theme-text-color);
+            padding: 15px;
+            font-family: Arial, sans-serif;
+            background: var(--tg-theme-bg-color, #0f172a);
+            color: var(--tg-theme-text-color, #fff);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
         }
-
         .container {
-            max-width: 500px;
-            margin: 0 auto;
+            max-width: 400px;
+            width: 100%;
+            text-align: center;
         }
-
-        h1 {
-            margin-bottom: 10px;
-        }
-
+        h1 { font-size: 20px; margin-bottom: 5px; }
+        .subtitle { font-size: 13px; color: #94a3b8; margin-bottom: 15px; }
+        
         .card {
-            padding: 20px;
-            border-radius: 16px;
+            background: var(--tg-theme-secondary-bg-color, #1e293b);
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+            margin-bottom: 15px;
+        }
+        .photo-container {
+            width: 100%;
+            height: 340px;
+            background: #000;
+        }
+        .photo-container img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .info {
+            padding: 15px;
+            font-size: 18px;
+            font-weight: bold;
+        }
+        
+        /* Блок 5 кнопок оценки */
+        .rating-buttons {
+            display: flex;
+            gap: 6px;
+            justify-content: center;
+            margin-bottom: 15px;
+        }
+        .rate-btn {
+            flex: 1;
+            padding: 12px 0;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            color: #fff;
+            transition: transform 0.1s;
+        }
+        .rate-btn:active { transform: scale(0.92); }
+        .rate-btn:nth-child(1) { background: #ef4444; }
+        .rate-btn:nth-child(2) { background: #f97316; }
+        .rate-btn:nth-child(3) { background: #eab308; }
+        .rate-btn:nth-child(4) { background: #84cc16; }
+        .rate-btn:nth-child(5) { background: #22c55e; }
 
-            background:
-                var(--tg-theme-secondary-bg-color);
+        .suggest-btn {
+            width: 100%;
+            padding: 14px;
+            border: 2px dashed #38bdf8;
+            border-radius: 12px;
+            background: transparent;
+            color: #38bdf8;
+            font-size: 15px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.2s, color 0.2s;
+        }
+        .suggest-btn:hover {
+            background: #38bdf8;
+            color: #0f172a;
         }
 
-        .status {
-            margin-top: 15px;
-
-            color:
-                var(--tg-theme-hint-color);
-        }
-
+        .counter { font-size: 12px; color: #64748b; margin-top: 10px; }
     </style>
-
 </head>
-
 <body>
 
 <div class="container">
-
-    <h1>Tracker</h1>
-
-    <div class="card">
-
-        <div id="greeting">
-            Загрузка...
+    <h1>🔥 Народный Рейтинг</h1>
+    <div class="subtitle">Оценивай анкеты от 1 до 5</div>
+    
+    <div class="card" id="card">
+        <div class="photo-container">
+            <img id="user-photo" src="" alt="Загрузка...">
         </div>
-
-        <div
-            class="status"
-            id="status"
-        >
-            Подключение...
-        </div>
-
+        <div class="info" id="user-name">Загрузка анкет...</div>
     </div>
 
+    <!-- 5 кнопок оценки -->
+    <div class="rating-buttons" id="action-buttons">
+        <button class="rate-btn" onclick="rate(1)">1</button>
+        <button class="rate-btn" onclick="rate(2)">2</button>
+        <button class="rate-btn" onclick="rate(3)">3</button>
+        <button class="rate-btn" onclick="rate(4)">4</button>
+        <button class="rate-btn" onclick="rate(5)">5</button>
+    </div>
+
+    <button class="suggest-btn" onclick="suggestPerson()">➕ Предложить человека</button>
+
+    <div class="counter" id="counter"></div>
 </div>
 
-
 <script>
-
     const tg = window.Telegram.WebApp;
-
     tg.ready();
-
     tg.expand();
 
+    let profiles = [];
+    let currentIndex = 0;
 
-    async function init() {
+    async function initApp() {
+        try {
+            // Отправляем лог об открытии и одновременно забираем список анкет с бэкенда
+            const res = await fetch("/api/miniapp/profiles", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ init_data: tg.initData })
+            });
 
-        const user = tg.initDataUnsafe?.user;
+            if (!res.ok) throw new Error("Ошибка загрузки");
+            
+            const data = await res.json();
+            profiles = data.profiles;
 
-        if (!user) {
+            renderProfile();
+        } catch (e) {
+            console.error(e);
+            document.getElementById("user-name").textContent = "Ошибка загрузки данных";
+        }
+    }
 
-            document.getElementById("greeting").textContent =
-                "Откройте приложение через Telegram";
-
-            document.getElementById("status").textContent =
-                "Telegram user data не найдены";
-
+    function renderProfile() {
+        if (profiles.length === 0 || currentIndex >= profiles.length) {
+            document.getElementById("card").innerHTML = `
+                <div style="padding: 40px; text-align: center;">
+                    <h2>Анкеты закончились! 🎉</h2>
+                    <p style="font-size: 14px; color: #94a3b8;">Итоги скоро в канале. Предлагай новых людей кнопкой ниже!</p>
+                </div>`;
+            document.getElementById("action-buttons").style.display = "none";
+            document.getElementById("counter").style.display = "none";
             return;
         }
 
-
-        const name =
-            [
-                user.first_name,
-                user.last_name
-            ]
-            .filter(Boolean)
-            .join(" ");
-
-
-        document.getElementById("greeting").textContent =
-            `Привет, ${name || "пользователь"}!`;
-
-
-        try {
-
-            const response = await fetch(
-                "/api/miniapp/open",
-                {
-                    method: "POST",
-
-                    headers: {
-                        "Content-Type":
-                            "application/json"
-                    },
-
-                    body: JSON.stringify({
-                        init_data: tg.initData
-                    })
-                }
-            );
-
-
-            if (!response.ok) {
-
-                throw new Error(
-                    "Server returned " +
-                    response.status
-                );
-
-            }
-
-
-            document.getElementById("status").textContent =
-                "Готово";
-
-
-        } catch (error) {
-
-            console.error(error);
-
-            document.getElementById("status").textContent =
-                "Ошибка подключения";
-
-        }
-
+        const p = profiles[currentIndex];
+        document.getElementById("user-photo").src = p.photo_url;
+        document.getElementById("user-name").textContent = p.name;
+        document.getElementById("counter").textContent = `Анкета ${currentIndex + 1} из ${profiles.length}`;
     }
 
+    function rate(score) {
+        currentIndex++;
+        renderProfile();
+    }
 
-    init();
+    function suggestPerson() {
+        // Замените YOUR_BOT_USERNAME на реальный юзернейм вашего бота (без @)
+        tg.openTelegramLink("https://t.me/YOUR_BOT_USERNAME?start=suggest");
+    }
 
+    initApp();
 </script>
 
 </body>
-
-</html>     
+</html>
