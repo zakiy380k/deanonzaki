@@ -61,6 +61,30 @@ PROFILES_DB = [
 # Проверка initData Telegram
 # ==========================================
 
+@dp.channel_post(F.chat.id == CHANNEL_ID)
+async def catch_channel_post(message: Message):
+    # Проверяем, что в посте есть и фотография, и текст (подпись)
+    if message.photo and message.caption:
+        try:
+            # Берем самую качественную фотографию
+            photo = message.photo[-1]
+            file = await bot.get_file(photo.file_id)
+            
+            # Формируем прямую ссылку на фото в телеграме
+            photo_url = f"https://api.telegram.org/file/bot{BOT_TOKEN}/{file.file_path}"
+            name = message.caption.strip()
+            
+            # Добавляем новую анкету в начало списка
+            PROFILES_DB.insert(0, {
+                "name": name,
+                "photo_url": photo_url
+            })
+            
+            logger.info(f"[NEW PROFILE] Добавлена новая анкета из канала: {name}")
+        except Exception as e:
+            logger.exception("Ошибка при обработке поста из канала")
+
+
 def validate_telegram_init_data(
     init_data: str,
     bot_token: str,
