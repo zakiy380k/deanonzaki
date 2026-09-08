@@ -86,8 +86,11 @@ async def catch_channel_post(message: Message):
             
             # Добавляем новую анкету в начало списка
             PROFILES_DB.insert(0, {
+                "id": len(PROFILES_DB)+1,
                 "name": name,
-                "photo_url": photo_url
+                "photo_url": photo_url,
+                "total_score" : 0,
+                "votes_count":0,
             })
             
             logger.info(f"[NEW PROFILE] Добавлена новая анкета из канала: {name}")
