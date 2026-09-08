@@ -309,7 +309,9 @@ async def id_command(message: Message):
 async def start_bot():
     await dp.start_polling(bot)
 
-
+@app.get("/ping")
+async def ping():
+    return {"status": "alive"}
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     import asyncio
