@@ -65,22 +65,46 @@
         .card.slide-left { transform: translateX(-120%) rotate(-15deg); opacity: 0; }
         .card.slide-right { transform: translateX(120%) rotate(15deg); opacity: 0; }
 
-        .photo-container {
-            width: 100%;
-            height: 360px;
-            background: #111;
-            position: relative;
-            overflow: hidden;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        .photo-container img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            object-position: center;
-        }
+.photo-container {
+    width: 100%;
+    aspect-ratio: 4 / 5;
+    background: #111;
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Размытый фон */
+.photo-container::before {
+    content: "";
+    position: absolute;
+    inset: -25px;
+
+    background-image: var(--photo-bg);
+    background-size: cover;
+    background-position: center;
+
+    filter: blur(25px);
+    transform: scale(1.1);
+
+    opacity: 0.45;
+}
+
+/* Основная фотография */
+.photo-container img {
+    position: relative;
+    z-index: 1;
+
+    width: 100%;
+    height: 100%;
+
+    object-fit: contain;
+    object-position: center;
+
+    display: block;
+}
         
         .info-overlay {
             position: absolute;
@@ -264,21 +288,36 @@
     }
 
     function renderProfile() {
-        if (profiles.length === 0 || currentIndex >= profiles.length) {
-            document.getElementById("card").innerHTML = `
-                <div style="padding: 60px 20px; text-align: center;">
-                    <h2 style="margin-bottom: 8px;">Анкеты закончились! 🎉</h2>
-                    <p style="font-size: 14px; color: #94a3b8; line-height: 1.4;">Все анкеты оценены. Посмотрите вкладку «Топ лидеров»!</p>
-                </div>`;
-            document.getElementById("action-buttons").style.display = "none";
-            document.getElementById("counter").style.display = "none";
-            return;
-        }
+    if (profiles.length === 0 || currentIndex >= profiles.length) {
+        document.getElementById("card").innerHTML = `
+            <div style="padding: 60px 20px; text-align: center;">
+                <h2 style="margin-bottom: 8px;">Анкеты закончились! 🎉</h2>
+                <p style="font-size: 14px; color: #94a3b8; line-height: 1.4;">
+                    Все анкеты оценены. Посмотрите вкладку «Топ лидеров»!
+                </p>
+            </div>`;
+        document.getElementById("action-buttons").style.display = "none";
+        document.getElementById("counter").style.display = "none";
+        return;
+    }
 
-        const p = profiles[currentIndex];
-        document.getElementById("user-photo").src = p.photo_url;
-        document.getElementById("user-name").textContent = p.name;
-        document.getElementById("counter").textContent = `Анкета ${currentIndex + 1} из ${profiles.length}`;
+    const p = profiles[currentIndex];
+
+    const photo = document.getElementById("user-photo");
+    const container = document.querySelector(".photo-container");
+
+    photo.src = p.photo_url;
+
+    // Эта же фотография используется как размытый фон
+    container.style.setProperty(
+        "--photo-bg",
+        `url("${p.photo_url}")`
+    );
+
+    document.getElementById("user-name").textContent = p.name;
+
+    document.getElementById("counter").textContent =
+        `Анкета ${currentIndex + 1} из ${profiles.length}`;
     }
 
     async function rate(score) {
