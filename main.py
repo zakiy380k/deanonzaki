@@ -155,7 +155,7 @@ def validate_telegram_init_data(
 # FastAPI
 # ==========================================
 
-app = FastAPI()
+
 
 class MiniAppRequest(BaseModel):
     init_data: str
