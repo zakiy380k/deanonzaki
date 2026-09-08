@@ -310,6 +310,7 @@ async def start_bot():
     await dp.start_polling(bot)
 
 @app.get("/ping")
+@app.head("/ping")
 async def ping():
     return {"status": "alive"}
 @asynccontextmanager
