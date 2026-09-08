@@ -39,7 +39,7 @@ logging.basicConfig(
 )
 
 logger = logging.getLogger(__name__)
-
+app = FastAPI(lifespan=lifespan)
 bot = Bot(token=BOT_TOKEN)
 dp = Dispatcher()
 
@@ -349,4 +349,4 @@ async def lifespan(app: FastAPI):
         logger.info("Telegram bot stopped")
 
 
-app = FastAPI(lifespan=lifespan)
+
