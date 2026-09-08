@@ -202,19 +202,21 @@ async def get_leaderboard(data: MiniAppRequest):
     if not user:
         raise HTTPException(status_code=403, detail="Unauthorized")
 
-    # Считаем среднее для каждой анкеты и сортируем по убыванию (сначала с наибольшим средним)
     leaderboard_data = []
     for p in PROFILES_DB:
-        avg = round(p["total_score"] / p["votes_count"], 1) if p["votes_count"] > 0 else 0.0
+        total_score = p.get("total_score", 0)
+        votes_count = p.get("votes_count", 0)
+        
+        avg = round(total_score / votes_count, 1) if votes_count > 0 else 0.0
+        
         leaderboard_data.append({
-            "id": p["id"],
-            "name": p["name"],
-            "photo_url": p["photo_url"],
+            "id": p.get("id", 0),
+            "name": p.get("name", "Без имени"),
+            "photo_url": p.get("photo_url", ""),
             "average": avg,
-            "votes_count": p["votes_count"]
+            "votes_count": votes_count
         })
 
-    # Сортировка: сначала по среднему баллу (по убыванию), при равенстве — по количеству голосов
     leaderboard_data.sort(key=lambda x: (x["average"], x["votes_count"]), reverse=True)
 
     return {"leaderboard": leaderboard_data}
