@@ -306,7 +306,10 @@ async def serve_webapp():
     with open("miniapp/index.html", "r", encoding="utf-8") as f:
         return f.read()
 
-
+@app.get("/ping")
+@app.head("/ping")
+async def ping():
+    return {"status": "alive"}
 # ==========================================
 # Telegram Bot
 # ==========================================
