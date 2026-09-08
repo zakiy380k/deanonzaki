@@ -302,9 +302,12 @@ async def ping():
     return {"status": "alive"}
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    import asyncio
-    task = asyncio.create_task(start_bot())
+    # Действия при запуске (если нужны)
     yield
-    task.cancel()
+    # Действия при выключении (останавливаем бота, чтобы не было конфликтов)
+    try:
+        await bot.session.close()
+    except Exception:
+        pass
 
-app.router.lifespan_context = lifespan
+app = FastAPI(lifespan=lifespan)
