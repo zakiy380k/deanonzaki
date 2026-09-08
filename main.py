@@ -189,21 +189,19 @@ async def get_leaderboard(data: MiniAppRequest):
     if not user:
         raise HTTPException(status_code=403, detail="Unauthorized")
 
+    # Считаем среднее для каждой анкеты и сортируем по убыванию (сначала с наибольшим средним)
     leaderboard_data = []
     for p in PROFILES_DB:
-        total_score = p.get("total_score", 0)
-        votes_count = p.get("votes_count", 0)
-        
-        avg = round(total_score / votes_count, 1) if votes_count > 0 else 0.0
-        
+        avg = round(p["total_score"] / p["votes_count"], 1) if p["votes_count"] > 0 else 0.0
         leaderboard_data.append({
-            "id": p.get("id", 0),
-            "name": p.get("name", "Без имени"),
-            "photo_url": p.get("photo_url", ""),
+            "id": p["id"],
+            "name": p["name"],
+            "photo_url": p["photo_url"],
             "average": avg,
-            "votes_count": votes_count
+            "votes_count": p["votes_count"]
         })
 
+    # Сортировка: сначала по среднему баллу (по убыванию), при равенстве — по количеству голосов
     leaderboard_data.sort(key=lambda x: (x["average"], x["votes_count"]), reverse=True)
 
     return {"leaderboard": leaderboard_data}
@@ -296,18 +294,12 @@ async def id_command(message: Message):
 async def start_bot():
     await dp.start_polling(bot)
 
-@app.get("/ping")
-@app.head("/ping")
-async def ping():
-    return {"status": "alive"}
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Действия при запуске (если нужны)
+    import asyncio
+    task = asyncio.create_task(start_bot())
     yield
-    # Действия при выключении (останавливаем бота, чтобы не было конфликтов)
-    try:
-        await bot.session.close()
-    except Exception:
-        pass
+    task.cancel()
 
-app = FastAPI(lifespan=lifespan)
+app.router.lifespan_context = lifespan
