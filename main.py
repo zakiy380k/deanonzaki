@@ -39,6 +39,41 @@ logging.basicConfig(
 )
 
 logger = logging.getLogger(__name__)
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    logger.info("Starting Telegram bot polling...")
+
+    polling_task = asyncio.create_task(
+        dp.start_polling(
+            bot,
+            handle_signals=False,
+            close_bot_session=False,
+        )
+    )
+
+    try:
+        yield
+
+    finally:
+        logger.info("Stopping Telegram bot...")
+
+        try:
+            await dp.stop_polling()
+        except RuntimeError:
+            # Polling уже был остановлен
+            pass
+
+        try:
+            await polling_task
+        except asyncio.CancelledError:
+            pass
+        except Exception:
+            logger.exception("Ошибка polling task")
+
+        await bot.session.close()
+
+        logger.info("Telegram bot stopped")
 app = FastAPI(lifespan=lifespan)
 bot = Bot(token=BOT_TOKEN)
 dp = Dispatcher()
@@ -313,40 +348,7 @@ async def start_bot():
 # FastAPI + Telegram Bot lifecycle
 # ==========================================
 
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    logger.info("Starting Telegram bot polling...")
 
-    polling_task = asyncio.create_task(
-        dp.start_polling(
-            bot,
-            handle_signals=False,
-            close_bot_session=False,
-        )
-    )
-
-    try:
-        yield
-
-    finally:
-        logger.info("Stopping Telegram bot...")
-
-        try:
-            await dp.stop_polling()
-        except RuntimeError:
-            # Polling уже был остановлен
-            pass
-
-        try:
-            await polling_task
-        except asyncio.CancelledError:
-            pass
-        except Exception:
-            logger.exception("Ошибка polling task")
-
-        await bot.session.close()
-
-        logger.info("Telegram bot stopped")
 
 
 
