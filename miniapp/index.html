@@ -65,37 +65,23 @@
         .card.slide-left { transform: translateX(-120%) rotate(-15deg); opacity: 0; }
         .card.slide-right { transform: translateX(120%) rotate(15deg); opacity: 0; }
 
-.photo-container {
-    width: 100%;
-    height: 360px;
-    background: #000;
-    position: relative;
-    overflow: hidden;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-/* Размытый фон из самой картинки для заполнения пустот */
-.photo-container::before {
-    content: '';
-    position: absolute;
-    inset: -20px;
-    background-image: var(--bg-image);
-    background-size: cover;
-    background-position: center;
-    filter: blur(20px) brightness(0.6);
-    z-index: 1;
-}
-
-.photo-container img {
-    width: 100%;
-    height: 100%;
-    object-fit: contain; /* Картинка полностью помещается без обрезок */
-    position: relative;
-    z-index: 2;
-    background: rgba(0, 0, 0, 0.2);
-}
+        .photo-container {
+            width: 100%;
+            height: 360px;
+            background: #111;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .photo-container img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            object-position: center;
+        }
+        
         .info-overlay {
             position: absolute;
             bottom: 0; left: 0; right: 0;
@@ -290,14 +276,6 @@
         }
 
         const p = profiles[currentIndex];
-        document.getElementById("user-photo").src = p.photo_url;
-        document.getElementById("user-name").textContent = p.name;
-        document.getElementById("counter").textContent = `Анкета ${currentIndex + 1} из ${profiles.length}`;
-
-        const p = profiles[currentIndex];
-        const photoContainer = document.querySelector('.photo-container');
-        photoContainer.style.setProperty('--bg-image', `url(${p.photo_url})`);
-
         document.getElementById("user-photo").src = p.photo_url;
         document.getElementById("user-name").textContent = p.name;
         document.getElementById("counter").textContent = `Анкета ${currentIndex + 1} из ${profiles.length}`;
