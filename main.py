@@ -310,9 +310,16 @@ async def start_bot():
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    import asyncio
-    task = asyncio.create_task(start_bot())
+    # --- СТАРТ ПРИЛОЖЕНИЯ ---
+    # Запускаем бота в фоновой задаче, чтобы он не блокировал Uvicorn
+    polling_task = asyncio.create_task(dp.start_polling(bot))
     yield
-    task.cancel()
-
-app.router.lifespan_context = lifespan
+    # --- ВЫКЛЮЧЕНИЕ ПРИЛОЖЕНИЯ ---
+    # Когда Render останавливает старый инстанс, корректно гасим бота
+    await dp.stop_polling()
+    polling_task.cancel()
+    try:
+        await polling_task
+    except asyncio.CancelledError:
+        pass
+    await bot.session.close()
