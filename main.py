@@ -45,21 +45,31 @@ dp = Dispatcher()
 # Закрытый канал с анкетами (если используете Telethon или сохраняете посты через хендлер)
 CHANNEL_ID = -1004413368129 
 
+USER_VOTES = {}
+
 # Временное хранилище анкет в памяти (можно заменить на файл или БД)
 PROFILES_DB = [
     {
+        "id": 1,
         "name": "Даниил",
-        "photo_url": "https://hc1.checker.in/file2link/photos/file_548829.jpg/file_548829.jpg"
+        "photo_url": "https://hc1.checker.in/file2link/photos/file_548829.jpg/file_548829.jpg",
+        "total_score": 0,
+        "votes_count": 0
     },
     {
+        "id": 1,
         "name": "Сабрина",
-        "photo_url": "https://hc1.checker.in/file2link/photos/file_548826.jpg/file_548826.jpg"
+        "photo_url": "https://hc1.checker.in/file2link/photos/file_548826.jpg/file_548826.jpg",
+        "total_score" : 0,
+        "votes_count" : 0
     }
 ]
 
 # ==========================================
 # Проверка initData Telegram
 # ==========================================
+
+
 
 @dp.channel_post(F.chat.id == CHANNEL_ID)
 async def catch_channel_post(message: Message):
@@ -146,6 +156,65 @@ app = FastAPI()
 class MiniAppRequest(BaseModel):
     init_data: str
 
+class RateRequest(BaseModel):
+    init_data: str
+    profile_id: int
+    score: int
+
+@app.post("/api/miniapp/rate")
+async def rate_profile(data: RateRequest):
+    user = validate_telegram_init_data(data.init_data, BOT_TOKEN)
+    if not user:
+        raise HTTPException(status_code=403, detail="Unauthorized")
+    
+    if not (1 <= data.score <= 5):
+        raise HTTPException(status_code=400, detail="Score must be between 1 and 5")
+
+    user_id = user["id"]
+
+    # Проверяем, голосовал ли уже этот пользователь за эту анкету
+    if user_id not in USER_VOTES:
+        USER_VOTES[user_id] = {}
+    
+    if data.profile_id in USER_VOTES[user_id]:
+        raise HTTPException(status_code=400, detail="You have already rated this profile")
+
+    profile = next((p for p in PROFILES_DB if p["id"] == data.profile_id), None)
+    if not profile:
+        raise HTTPException(status_code=404, detail="Profile not found")
+
+    # Записываем голос
+    USER_VOTES[user_id][data.profile_id] = data.score
+    profile["total_score"] += data.score
+    profile["votes_count"] += 1
+    
+    average = round(profile["total_score"] / profile["votes_count"], 1) if profile["votes_count"] > 0 else 0.0
+
+    logger.info(f"[RATE] Пользователь {user_id} поставил {data.score} анкере ID {data.profile_id}. Среднее: {average}")
+    return {"status": "ok", "average": average, "votes_count": profile["votes_count"]}
+
+@app.post("/api/miniapp/leaderboard")
+async def get_leaderboard(data: MiniAppRequest):
+    user = validate_telegram_init_data(data.init_data, BOT_TOKEN)
+    if not user:
+        raise HTTPException(status_code=403, detail="Unauthorized")
+
+    # Считаем среднее для каждой анкеты и сортируем по убыванию (сначала с наибольшим средним)
+    leaderboard_data = []
+    for p in PROFILES_DB:
+        avg = round(p["total_score"] / p["votes_count"], 1) if p["votes_count"] > 0 else 0.0
+        leaderboard_data.append({
+            "id": p["id"],
+            "name": p["name"],
+            "photo_url": p["photo_url"],
+            "average": avg,
+            "votes_count": p["votes_count"]
+        })
+
+    # Сортировка: сначала по среднему баллу (по убыванию), при равенстве — по количеству голосов
+    leaderboard_data.sort(key=lambda x: (x["average"], x["votes_count"]), reverse=True)
+
+    return {"leaderboard": leaderboard_data}
 
 @app.get("/")
 async def root():
