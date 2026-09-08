@@ -51,13 +51,18 @@
         .photo-container {
             width: 100%;
             height: 360px;
-            background: #000;
+            background: #111; /* Цвет фона на случай пустых или узких фото */
             position: relative;
+            overflow: hidden; /* Важно: обрезает всё, что выходит за рамки */
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
         .photo-container img {
             width: 100%;
             height: 100%;
-            object-fit: cover;
+            object-fit: cover; /* Фото заполнит блок без искажения пропорций (лишнее обрежется) */
+            object-position: center; /* Центрирует изображение */
         }
         
         /* Градиент поверх фото, чтобы имя читалось идеально */
@@ -129,8 +134,8 @@
 <body>
 
 <div class="container">
-    <h1>🔥 Народный Рейтинг</h1>
-    <div class="subtitle">Днепр под прицелом</div>
+    <h1>🔥 Рейт учеников</h1>
+    <div class="subtitle">67</div>
     
     <div class="card" id="card">
         <div class="photo-container">
@@ -143,11 +148,11 @@
 
     <!-- 5 кнопок оценки -->
     <div class="rating-buttons" id="action-buttons">
-        <button class="rate-btn" onclick="rate(1)">1</button>
-        <button class="rate-btn" onclick="rate(2)">2</button>
-        <button class="rate-btn" onclick="rate(3)">3</button>
-        <button class="rate-btn" onclick="rate(4)">4</button>
-        <button class="rate-btn" onclick="rate(5)">5</button>
+        <button class="rate-btn" onclick="rate(1)">1🤢</button>
+        <button class="rate-btn" onclick="rate(2)">2🙁</button>
+        <button class="rate-btn" onclick="rate(3)">3😐</button>
+        <button class="rate-btn" onclick="rate(4)">4😀</button>
+        <button class="rate-btn" onclick="rate(5)">5😍</button>
     </div>
 
     <button class="suggest-btn" onclick="suggestPerson()">➕ Предложить человека</button>
@@ -157,69 +162,103 @@
 
 <script>
     const tg = window.Telegram.WebApp;
-    tg.ready();
-    tg.expand();
-
-    let profiles = [];
-    let currentIndex = 0;
-
-    async function initApp() {
-        try {
-            const res = await fetch("/api/miniapp/profiles", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ init_data: tg.initData })
-            });
-
-            if (!res.ok) throw new Error("Ошибка загрузки");
+        tg.ready();
+        tg.expand();
+    
+        let profiles = [];
+        let currentIndex = 0;
+    
+        async function initApp() {
+            try {
+                const res = await fetch("/api/miniapp/profiles", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ init_data: tg.initData })
+                });
             
-            const data = await res.json();
-            profiles = data.profiles;
-
-            renderProfile();
-        } catch (e) {
-            console.error(e);
-            document.getElementById("user-name").textContent = "Ошибка загрузки данных";
+                if (!res.ok) throw new Error("Ошибка загрузки");
+                
+                const data = await res.json();
+                profiles = data.profiles;
+            
+                // Запускаем предзагрузку всех картинок в фоновом режиме
+                preloadImages();
+            
+                renderProfile();
+            } catch (e) {
+                console.error(e);
+                document.getElementById("user-name").textContent = "Ошибка загрузки данных";
+            }
         }
-    }
-
-    function renderProfile() {
-        if (profiles.length === 0 || currentIndex >= profiles.length) {
-            document.getElementById("card").innerHTML = `
-                <div style="padding: 60px 20px; text-align: center;">
-                    <h2 style="margin-bottom: 8px;">Анкеты закончились! 🎉</h2>
-                    <p style="font-size: 14px; color: #94a3b8; line-height: 1.4;">Итоги скоро в канале. Предлагай новых людей кнопкой ниже!</p>
-                </div>`;
-            document.getElementById("action-buttons").style.display = "none";
-            document.getElementById("counter").style.display = "none";
-            return;
+    
+        // Функция фоновой предзагрузки изображений
+        function preloadImages() {
+            profiles.forEach(p => {
+                if (p.photo_url) {
+                    const img = new Image();
+                    img.src = p.photo_url;
+                }
+            });
         }
-
-        const p = profiles[currentIndex];
-        document.getElementById("user-photo").src = p.photo_url;
-        document.getElementById("user-name").textContent = p.name;
-        document.getElementById("counter").textContent = `Анкета ${currentIndex + 1} из ${profiles.length}`;
-    }
-
-    function rate(score) {
-        const card = document.getElementById("card");
+    
+        function renderProfile() {
+            if (profiles.length === 0 || currentIndex >= profiles.length) {
+                document.getElementById("card").innerHTML = `
+                    <div style="padding: 60px 20px; text-align: center;">
+                        <h2 style="margin-bottom: 8px;">Анкеты закончились! 🎉</h2>
+                        <p style="font-size: 14px; color: #94a3b8; line-height: 1.4;">Итоги скоро в канале. Предлагай новых людей кнопкой ниже!</p>
+                    </div>`;
+                document.getElementById("action-buttons").style.display = "none";
+                document.getElementById("counter").style.display = "none";
+                return;
+            }
         
-        // Низкие оценки улетают влево, высокие вправо
-        const slideClass = score <= 2 ? "slide-left" : "slide-right";
-        card.classList.add(slideClass);
+            const p = profiles[currentIndex];
+            document.getElementById("user-photo").src = p.photo_url;
+            document.getElementById("user-name").textContent = p.name;
+            document.getElementById("counter").textContent = `Анкета ${currentIndex + 1} из ${profiles.length}`;
+        }
+    
+        async function rate(score) {
+            const card = document.getElementById("card");
+            const currentProfile = profiles[currentIndex];
+            
+            // Тактильный отклик Telegram (вибрация), если поддерживается устройством
+            if (tg.HapticFeedback) {
+                tg.HapticFeedback.impactOccurred('medium');
+            }
         
-        setTimeout(() => {
-            currentIndex++;
-            renderProfile();
-            card.classList.remove("slide-left", "slide-right");
-        }, 250);
-    }
-
-    function suggestPerson() {
-        tg.openTelegramLink("https://t.me/truexa67lyceum_bot?start=suggest");
-    }
-
-    initApp();
+            // Низкие оценки улетают влево, высокие вправо
+            const slideClass = score <= 2 ? "slide-left" : "slide-right";
+            card.classList.add(slideClass);
+        
+            // Отправка оценки на бэкенд
+            try {
+                await fetch("/api/miniapp/rate", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        init_data: tg.initData,
+                        profile_id: currentProfile.id,
+                        score: score
+                    })
+                });
+            } catch (e) {
+                console.error("Не удалось отправить оценку:", e);
+            }
+            
+            setTimeout(() => {
+                currentIndex++;
+                renderProfile();
+                card.classList.remove("slide-left", "slide-right");
+            }, 250);
+        }
+    
+        function suggestPerson() {
+            tg.openTelegramLink("https://t.me/truexa67lyceum_bot?start=suggest");
+        }
+    
+        initApp();
 </script>
 
 </body>
