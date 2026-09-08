@@ -24,9 +24,34 @@
             text-align: center;
         }
         h1 { font-size: 24px; margin: 5px 0 2px; font-weight: 800; letter-spacing: -0.5px; }
-        .subtitle { font-size: 13px; color: #64748b; margin-bottom: 20px; font-weight: 500; }
+        .subtitle { font-size: 13px; color: #64748b; margin-bottom: 15px; font-weight: 500; }
         
-        /* Карточка с глубокой тенью и плавной анимацией свайпа */
+        /* Переключатель вкладок */
+        .tabs {
+            display: flex;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            padding: 4px;
+            margin-bottom: 20px;
+        }
+        .tab {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            background: transparent;
+            color: #94a3b8;
+            font-weight: 700;
+            font-size: 14px;
+            cursor: pointer;
+            border-radius: 9px;
+            transition: all 0.2s ease;
+        }
+        .tab.active {
+            background: var(--tg-theme-button-color, #38bdf8);
+            color: var(--tg-theme-button-text-color, #fff);
+        }
+
+        /* Карточка */
         .card {
             background: var(--tg-theme-secondary-bg-color, #131b2e);
             border-radius: 24px;
@@ -37,23 +62,15 @@
             transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.3s ease;
             border: 1px solid rgba(255, 255, 255, 0.05);
         }
-        
-        /* Классы для анимации улетания карточки */
-        .card.slide-left {
-            transform: translateX(-120%) rotate(-15deg);
-            opacity: 0;
-        }
-        .card.slide-right {
-            transform: translateX(120%) rotate(15deg);
-            opacity: 0;
-        }
+        .card.slide-left { transform: translateX(-120%) rotate(-15deg); opacity: 0; }
+        .card.slide-right { transform: translateX(120%) rotate(15deg); opacity: 0; }
 
         .photo-container {
             width: 100%;
             height: 360px;
-            background: #111; /* Цвет фона на случай пустых или узких фото */
+            background: #111;
             position: relative;
-            overflow: hidden; /* Важно: обрезает всё, что выходит за рамки */
+            overflow: hidden;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -61,16 +78,13 @@
         .photo-container img {
             width: 100%;
             height: 100%;
-            object-fit: cover; /* Фото заполнит блок без искажения пропорций (лишнее обрежется) */
-            object-position: center; /* Центрирует изображение */
+            object-fit: cover;
+            object-position: center;
         }
         
-        /* Градиент поверх фото, чтобы имя читалось идеально */
         .info-overlay {
             position: absolute;
-            bottom: 0;
-            left: 0;
-            right: 0;
+            bottom: 0; left: 0; right: 0;
             padding: 30px 20px 18px;
             background: linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0) 100%);
             text-align: left;
@@ -79,11 +93,9 @@
             font-size: 22px;
             font-weight: 800;
             color: #fff;
-            letter-spacing: -0.3px;
             text-shadow: 0 2px 4px rgba(0,0,0,0.5);
         }
         
-        /* Стильные закругленные кнопки оценки с градиентами */
         .rating-buttons {
             display: flex;
             gap: 8px;
@@ -103,8 +115,6 @@
             transition: transform 0.1s ease, filter 0.2s ease;
         }
         .rate-btn:active { transform: scale(0.90); filter: brightness(1.2); }
-        
-        /* Индивидуальные цвета с сочным неоновым оттенком */
         .rate-btn:nth-child(1) { background: linear-gradient(135deg, #f87171, #ef4444); }
         .rate-btn:nth-child(2) { background: linear-gradient(135deg, #fb923c, #f97316); }
         .rate-btn:nth-child(3) { background: linear-gradient(135deg, #facc15, #eab308); color: #000; }
@@ -123,143 +133,254 @@
             cursor: pointer;
             transition: all 0.2s ease;
         }
-        .suggest-btn:hover, .suggest-btn:active {
-            background: rgba(56, 189, 248, 0.12);
-            border-color: #38bdf8;
-        }
+        .suggest-btn:hover { background: rgba(56, 189, 248, 0.12); }
 
-        .counter { font-size: 12px; color: #64748b; margin-top: 14px; font-weight: 600; letter-spacing: 0.5px; text-transform: uppercase; }
+        .counter { font-size: 12px; color: #64748b; margin-top: 14px; font-weight: 600; text-transform: uppercase; }
+
+        /* Таблица лидеров */
+        .leaderboard-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            text-align: left;
+        }
+        .lb-item {
+            display: flex;
+            align-items: center;
+            background: var(--tg-theme-secondary-bg-color, #131b2e);
+            border-radius: 16px;
+            padding: 10px 14px;
+            gap: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        .lb-rank {
+            font-size: 18px;
+            font-weight: 800;
+            color: #64748b;
+            width: 24px;
+            text-align: center;
+        }
+        .lb-item:nth-child(1) .lb-rank { color: #facc15; }
+        .lb-item:nth-child(2) .lb-rank { color: #94a3b8; }
+        .lb-item:nth-child(3) .lb-rank { color: #fb923c; }
+
+        .lb-avatar {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            object-fit: cover;
+        }
+        .lb-info { flex: 1; }
+        .lb-name { font-size: 16px; font-weight: 700; margin-bottom: 2px; }
+        .lb-votes { font-size: 12px; color: #64748b; }
+        .lb-score {
+            font-size: 18px;
+            font-weight: 800;
+            color: #4ade80;
+            background: rgba(74, 222, 128, 0.1);
+            padding: 6px 10px;
+            border-radius: 10px;
+        }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h1>🔥 Рейт учеников</h1>
-    <div class="subtitle">67</div>
+    <h1>🔥 Народный Рейтинг</h1>
+    <div class="subtitle">Днепр под прицелом</div>
     
-    <div class="card" id="card">
-        <div class="photo-container">
-            <img id="user-photo" src="" alt="Загрузка...">
-            <div class="info-overlay">
-                <div class="info" id="user-name">Загрузка анкет...</div>
+    <!-- Переключение вкладок -->
+    <div class="tabs">
+        <button class="tab active" id="tab-vote" onclick="switchTab('vote')">Оценивать</button>
+        <button class="tab" id="tab-lb" onclick="switchTab('lb')">🏆 Топ лидеров</button>
+    </div>
+
+    <!-- Секция голосования -->
+    <div id="vote-section">
+        <div class="card" id="card">
+            <div class="photo-container">
+                <img id="user-photo" src="" alt="Загрузка...">
+                <div class="info-overlay">
+                    <div class="info" id="user-name">Загрузка анкет...</div>
+                </div>
             </div>
         </div>
+
+        <div class="rating-buttons" id="action-buttons">
+            <button class="rate-btn" onclick="rate(1)">1</button>
+            <button class="rate-btn" onclick="rate(2)">2</button>
+            <button class="rate-btn" onclick="rate(3)">3</button>
+            <button class="rate-btn" onclick="rate(4)">4</button>
+            <button class="rate-btn" onclick="rate(5)">5</button>
+        </div>
+
+        <button class="suggest-btn" onclick="suggestPerson()">➕ Предложить человека</button>
+        <div class="counter" id="counter"></div>
     </div>
 
-    <!-- 5 кнопок оценки -->
-    <div class="rating-buttons" id="action-buttons">
-        <button class="rate-btn" onclick="rate(1)">1🤢</button>
-        <button class="rate-btn" onclick="rate(2)">2🙁</button>
-        <button class="rate-btn" onclick="rate(3)">3😐</button>
-        <button class="rate-btn" onclick="rate(4)">4😀</button>
-        <button class="rate-btn" onclick="rate(5)">5😍</button>
+    <!-- Секция таблицы лидеров -->
+    <div id="lb-section" style="display: none;">
+        <div class="leaderboard-list" id="leaderboard-container">
+            <div style="color: #64748b; text-align: center; padding: 40px;">Загрузка топа...</div>
+        </div>
     </div>
-
-    <button class="suggest-btn" onclick="suggestPerson()">➕ Предложить человека</button>
-
-    <div class="counter" id="counter"></div>
 </div>
 
 <script>
     const tg = window.Telegram.WebApp;
-        tg.ready();
-        tg.expand();
-    
-        let profiles = [];
-        let currentIndex = 0;
-    
-        async function initApp() {
-            try {
-                const res = await fetch("/api/miniapp/profiles", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ init_data: tg.initData })
-                });
-            
-                if (!res.ok) throw new Error("Ошибка загрузки");
-                
-                const data = await res.json();
-                profiles = data.profiles;
-            
-                // Запускаем предзагрузку всех картинок в фоновом режиме
-                preloadImages();
-            
-                renderProfile();
-            } catch (e) {
-                console.error(e);
-                document.getElementById("user-name").textContent = "Ошибка загрузки данных";
-            }
-        }
-    
-        // Функция фоновой предзагрузки изображений
-        function preloadImages() {
-            profiles.forEach(p => {
-                if (p.photo_url) {
-                    const img = new Image();
-                    img.src = p.photo_url;
-                }
+    tg.ready();
+    tg.expand();
+
+    let profiles = [];
+    let currentIndex = 0;
+
+    async function initApp() {
+        try {
+            const res = await fetch("/api/miniapp/profiles", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ init_data: tg.initData })
             });
+
+            if (!res.ok) throw new Error("Ошибка загрузки");
+            
+            const data = await res.json();
+            profiles = data.profiles;
+            preloadImages();
+            renderProfile();
+        } catch (e) {
+            console.error(e);
+            document.getElementById("user-name").textContent = "Ошибка загрузки данных";
         }
-    
-        function renderProfile() {
-            if (profiles.length === 0 || currentIndex >= profiles.length) {
-                document.getElementById("card").innerHTML = `
-                    <div style="padding: 60px 20px; text-align: center;">
-                        <h2 style="margin-bottom: 8px;">Анкеты закончились! 🎉</h2>
-                        <p style="font-size: 14px; color: #94a3b8; line-height: 1.4;">Итоги скоро в канале. Предлагай новых людей кнопкой ниже!</p>
-                    </div>`;
-                document.getElementById("action-buttons").style.display = "none";
-                document.getElementById("counter").style.display = "none";
+    }
+
+    function preloadImages() {
+        profiles.forEach(p => {
+            if (p.photo_url) {
+                const img = new Image();
+                img.src = p.photo_url;
+            }
+        });
+    }
+
+    function renderProfile() {
+        if (profiles.length === 0 || currentIndex >= profiles.length) {
+            document.getElementById("card").innerHTML = `
+                <div style="padding: 60px 20px; text-align: center;">
+                    <h2 style="margin-bottom: 8px;">Анкеты закончились! 🎉</h2>
+                    <p style="font-size: 14px; color: #94a3b8; line-height: 1.4;">Все анкеты оценены. Посмотрите вкладку «Топ лидеров»!</p>
+                </div>`;
+            document.getElementById("action-buttons").style.display = "none";
+            document.getElementById("counter").style.display = "none";
+            return;
+        }
+
+        const p = profiles[currentIndex];
+        document.getElementById("user-photo").src = p.photo_url;
+        document.getElementById("user-name").textContent = p.name;
+        document.getElementById("counter").textContent = `Анкета ${currentIndex + 1} из ${profiles.length}`;
+    }
+
+    async function rate(score) {
+        const card = document.getElementById("card");
+        const currentProfile = profiles[currentIndex];
+        
+        if (tg.HapticFeedback) {
+            tg.HapticFeedback.impactOccurred('medium');
+        }
+
+        const slideClass = score <= 2 ? "slide-left" : "slide-right";
+        card.classList.add(slideClass);
+
+        try {
+            await fetch("/api/miniapp/rate", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    init_data: tg.initData,
+                    profile_id: currentProfile.id,
+                    score: score
+                })
+            });
+        } catch (e) {
+            console.error("Не удалось отправить оценку:", e);
+        }
+        
+        setTimeout(() => {
+            currentIndex++;
+            renderProfile();
+            card.classList.remove("slide-left", "slide-right");
+        }, 250);
+    }
+
+    async function switchTab(tab) {
+        const voteSec = document.getElementById("vote-section");
+        const lbSec = document.getElementById("lb-section");
+        const tabVote = document.getElementById("tab-vote");
+        const tabLb = document.getElementById("tab-lb");
+
+        if (tab === 'vote') {
+            voteSec.style.display = "block";
+            lbSec.style.display = "none";
+            tabVote.classList.add("active");
+            tabLb.classList.remove("active");
+        } else {
+            voteSec.style.display = "none";
+            lbSec.style.display = "block";
+            tabLb.classList.add("active");
+            tabVote.classList.remove("active");
+            loadLeaderboard();
+        }
+    }
+
+    async function loadLeaderboard() {
+        const container = document.getElementById("leaderboard-container");
+        container.innerHTML = `<div style="color: #64748b; text-align: center; padding: 40px;">Загрузка топа...</div>`;
+
+        try {
+            const res = await fetch("/api/miniapp/leaderboard", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ init_data: tg.initData })
+            });
+
+            if (!res.ok) throw new Error("Ошибка загрузки топа");
+
+            const data = await res.json();
+            const list = data.leaderboard;
+
+            if (list.length === 0) {
+                container.innerHTML = `<div style="color: #64748b; text-align: center; padding: 40px;">Пока нет оценок</div>`;
                 return;
             }
-        
-            const p = profiles[currentIndex];
-            document.getElementById("user-photo").src = p.photo_url;
-            document.getElementById("user-name").textContent = p.name;
-            document.getElementById("counter").textContent = `Анкета ${currentIndex + 1} из ${profiles.length}`;
+
+            container.innerHTML = "";
+            list.forEach((item, index) => {
+                const rank = index + 1;
+                container.innerHTML += `
+                    <div class="lb-item">
+                        <div class="lb-rank">#${rank}</div>
+                        <img class="lb-avatar" src="${item.photo_url}" alt="">
+                        <div class="lb-info">
+                            <div class="lb-name">${item.name}</div>
+                            <div class="lb-votes">Голосов: ${item.votes_count}</div>
+                        </div>
+                        <div class="lb-score">★ ${item.average}</div>
+                    </div>
+                `;
+            });
+        } catch (e) {
+            console.error(e);
+            container.innerHTML = `<div style="color: #f87171; text-align: center; padding: 40px;">Ошибка загрузки</div>`;
         }
-    
-        async function rate(score) {
-            const card = document.getElementById("card");
-            const currentProfile = profiles[currentIndex];
-            
-            // Тактильный отклик Telegram (вибрация), если поддерживается устройством
-            if (tg.HapticFeedback) {
-                tg.HapticFeedback.impactOccurred('medium');
-            }
-        
-            // Низкие оценки улетают влево, высокие вправо
-            const slideClass = score <= 2 ? "slide-left" : "slide-right";
-            card.classList.add(slideClass);
-        
-            // Отправка оценки на бэкенд
-            try {
-                await fetch("/api/miniapp/rate", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                        init_data: tg.initData,
-                        profile_id: currentProfile.id,
-                        score: score
-                    })
-                });
-            } catch (e) {
-                console.error("Не удалось отправить оценку:", e);
-            }
-            
-            setTimeout(() => {
-                currentIndex++;
-                renderProfile();
-                card.classList.remove("slide-left", "slide-right");
-            }, 250);
-        }
-    
-        function suggestPerson() {
-            tg.openTelegramLink("https://t.me/truexa67lyceum_bot?start=suggest");
-        }
-    
-        initApp();
+    }
+
+    function suggestPerson() {
+        tg.openTelegramLink("https://t.me/truexa67lyceum_bot?start=suggest");
+    }
+
+    initApp();
 </script>
 
 </body>
-</html> 
+</html>
