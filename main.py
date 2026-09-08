@@ -6,6 +6,7 @@ import os
 import time
 from urllib.parse import parse_qsl
 from fastapi.responses import HTMLResponse
+import asyncio
 
 from aiogram import Bot, Dispatcher, F
 from aiogram.filters import Command
