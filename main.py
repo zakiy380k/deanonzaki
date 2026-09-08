@@ -57,7 +57,7 @@ PROFILES_DB = [
         "votes_count": 0
     },
     {
-        "id": 1,
+        "id": 2,
         "name": "Сабрина",
         "photo_url": "https://hc1.checker.in/file2link/photos/file_548826.jpg/file_548826.jpg",
         "total_score" : 0,
@@ -308,18 +308,44 @@ async def start_bot():
     await dp.start_polling(bot)
 
 
+# ==========================================
+# FastAPI + Telegram Bot lifecycle
+# ==========================================
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # --- СТАРТ ПРИЛОЖЕНИЯ ---
-    # Запускаем бота в фоновой задаче, чтобы он не блокировал Uvicorn
-    polling_task = asyncio.create_task(dp.start_polling(bot))
-    yield
-    # --- ВЫКЛЮЧЕНИЕ ПРИЛОЖЕНИЯ ---
-    # Когда Render останавливает старый инстанс, корректно гасим бота
-    await dp.stop_polling()
-    polling_task.cancel()
+    logger.info("Starting Telegram bot polling...")
+
+    polling_task = asyncio.create_task(
+        dp.start_polling(
+            bot,
+            handle_signals=False,
+            close_bot_session=False,
+        )
+    )
+
     try:
-        await polling_task
-    except asyncio.CancelledError:
-        pass
-    await bot.session.close()
+        yield
+
+    finally:
+        logger.info("Stopping Telegram bot...")
+
+        try:
+            await dp.stop_polling()
+        except RuntimeError:
+            # Polling уже был остановлен
+            pass
+
+        try:
+            await polling_task
+        except asyncio.CancelledError:
+            pass
+        except Exception:
+            logger.exception("Ошибка polling task")
+
+        await bot.session.close()
+
+        logger.info("Telegram bot stopped")
+
+
+app = FastAPI(lifespan=lifespan)
