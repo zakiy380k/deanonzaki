@@ -49,20 +49,7 @@ USER_VOTES = {}
 
 # Временное хранилище анкет в памяти (можно заменить на файл или БД)
 PROFILES_DB = [
-    {
-        "id": 1,
-        "name": "Даниил",
-        "photo_url": "https://hc1.checker.in/file2link/photos/file_548829.jpg/file_548829.jpg",
-        "total_score": 0,
-        "votes_count": 0
-    },
-    {
-        "id": 1,
-        "name": "Сабрина",
-        "photo_url": "https://hc1.checker.in/file2link/photos/file_548826.jpg/file_548826.jpg",
-        "total_score" : 0,
-        "votes_count" : 0
-    }
+
 ]
 
 # ==========================================
