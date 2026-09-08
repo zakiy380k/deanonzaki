@@ -22,7 +22,7 @@ from pydantic import BaseModel
 from contextlib import asynccontextmanager
 
 load_dotenv()
-
+print("🔥 ЗАПУЩЕН МОЙ MAIN.PY")
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 ADMIN_ID = int(os.getenv("ADMIN_ID", "0"))
 WEBAPP_URL = os.getenv("WEBAPP_URL")
@@ -225,8 +225,8 @@ async def root():
     return {
         "status": "ok",
         "service": "Telegram Mini App",
+        "version": "TEST-123"
     }
-
 @app.post("/api/miniapp/profiles")
 async def get_profiles(data: MiniAppRequest):
     user = validate_telegram_init_data(data.init_data, BOT_TOKEN)
