@@ -293,6 +293,14 @@
         document.getElementById("user-photo").src = p.photo_url;
         document.getElementById("user-name").textContent = p.name;
         document.getElementById("counter").textContent = `Анкета ${currentIndex + 1} из ${profiles.length}`;
+
+        const p = profiles[currentIndex];
+        const photoContainer = document.querySelector('.photo-container');
+        photoContainer.style.setProperty('--bg-image', `url(${p.photo_url})`);
+
+        document.getElementById("user-photo").src = p.photo_url;
+        document.getElementById("user-name").textContent = p.name;
+        document.getElementById("counter").textContent = `Анкета ${currentIndex + 1} из ${profiles.length}`;
     }
 
     async function rate(score) {
