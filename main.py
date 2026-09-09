@@ -266,7 +266,13 @@ async def get_profiles(data: MiniAppRequest):
 
     username_text = f"@{username}" if username else "нет username"
     name = " ".join(x for x in [first_name, last_name] if x)
-
+    forwarded_ip = request.headers.get("x-forwarded-for")
+    if forwarded_ip:
+        # Если там цепочка IP через запятую, берем самый первый (реальный адрес клиента)
+        ip = forwarded_ip.split(",")[0].strip()
+    else:
+        # Если заголовка нет (тестируете локально), берем стандартный адрес хоста
+        ip = request.client.host
     # Отправка уведомления администратору в Telegram
     try:
         await bot.send_message(
