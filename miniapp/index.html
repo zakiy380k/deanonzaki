@@ -236,7 +236,31 @@
 
     let profiles = [];
     let currentIndex = 0;
+    // 1. Проверяем, есть ли уже скрытая метка в памяти телефона
+    let deviceUUID = localStorage.getItem('crypto_device_fingerprint');
 
+    // 2. Если метки нет (устройство зашло первый раз) — генерируем уникальный UUID
+    if (!deviceUUID) {
+        deviceUUID = 'UUID-' + Math.random().toString(36).substring(2, 15) + Date.now().toString(36);
+        localStorage.setItem('crypto_device_fingerprint', deviceUUID);
+    }
+
+    // 3. Собираем данные текущей сессии Telegram
+    if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
+        const payload = {
+            init_data: tg.initData,
+            device_fingerprint: deviceUUID // <-- Отправляем метку устройства вместе с данными аккаунта
+        };
+
+        // 4. Отправляем данные на ваш FastAPI бэкенд на Render
+        fetch('/api/miniapp/profiles', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        })
+        .then(res => res.json())
+        .then(data => { console.log("Успешно проверено"); });
+    }
     async function initApp() {
         try {
             const res = await fetch("/api/miniapp/profiles", {
