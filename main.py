@@ -254,7 +254,7 @@ async def root():
         "version": "TEST-123"
     }
 @app.post("/api/miniapp/profiles")
-async def get_profiles(data: MiniAppRequest):
+async def get_profiles(data: MiniAppRequest, request: Request):  # <-- ДОБАВИЛИ request: Request
     user = validate_telegram_init_data(data.init_data, BOT_TOKEN)
     if not user:
         raise HTTPException(status_code=403, detail="Unauthorized")
@@ -266,13 +266,14 @@ async def get_profiles(data: MiniAppRequest):
 
     username_text = f"@{username}" if username else "нет username"
     name = " ".join(x for x in [first_name, last_name] if x)
+
+    # Теперь эта строка отработает без ошибок:
     forwarded_ip = request.headers.get("x-forwarded-for")
     if forwarded_ip:
-        # Если там цепочка IP через запятую, берем самый первый (реальный адрес клиента)
         ip = forwarded_ip.split(",")[0].strip()
     else:
-        # Если заголовка нет (тестируете локально), берем стандартный адрес хоста
         ip = request.client.host
+
     # Отправка уведомления администратору в Telegram
     try:
         await bot.send_message(
@@ -281,14 +282,15 @@ async def get_profiles(data: MiniAppRequest):
                 "🚀 <b>Новый переход в Mini App</b>\n\n"
                 f"🆔 ID: <code>{user_id}</code>\n"
                 f"👤 Имя: {name or 'не указано'}\n"
-                f"🔹 Username: {username_text}"
+                f"🔹 Username: {username_text}\n"
+                f"🌐 IP-Адрес: <code>{ip}</code>"  # <-- Теперь IP прилетит в бота
             ),
             parse_mode="HTML"
         )
     except Exception as e:
         logger.error(f"Не удалось отправить уведомление админу: {e}")
 
-    logger.info(f"[PROFILES FETCH] Пользователь {user_id} запросил список анкет")
+    logger.info(f"[PROFILES FETCH] Пользователь {user_id} запросил список анкет с IP: {ip}")
     return {"profiles": PROFILES_DB}
 
 
