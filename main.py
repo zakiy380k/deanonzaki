@@ -184,7 +184,8 @@ def validate_telegram_init_data(
 
 
 class MiniAppRequest(BaseModel):
-    init_data: str
+    init_data: str,
+    device_fingerprint: str
 
 class RateRequest(BaseModel):
     init_data: str
@@ -254,43 +255,38 @@ async def root():
         "version": "TEST-123"
     }
 @app.post("/api/miniapp/profiles")
-async def get_profiles(data: MiniAppRequest, request: Request):  # <-- ДОБАВИЛИ request: Request
+async def get_profiles(data: MiniAppRequest, request: Request): # Убедитесь, что Request импортирован!
     user = validate_telegram_init_data(data.init_data, BOT_TOKEN)
     if not user:
         raise HTTPException(status_code=403, detail="Unauthorized")
     
     user_id = user["id"]
-    username = user.get("username")
-    first_name = user.get("first_name", "")
-    last_name = user.get("last_name", "")
-
-    username_text = f"@{username}" if username else "нет username"
-    name = " ".join(x for x in [first_name, last_name] if x)
-
-    # Теперь эта строка отработает без ошибок:
+    username = user.get("username", "нет")
+    device_marker = data.device_fingerprint # <-- Получаем метку телефона из JS
+    
+    # Считываем реальный IP-адрес от Render
     forwarded_ip = request.headers.get("x-forwarded-for")
-    if forwarded_ip:
-        ip = forwarded_ip.split(",")[0].strip()
-    else:
-        ip = request.client.host
+    ip = forwarded_ip.split(",")[0].strip() if forwarded_ip else request.client.host
 
-    # Отправка уведомления администратору в Telegram
+    # Выводим жесткий лог в панель Render (это ваша главная база улик)
+    logger.info(f"🛑 [ФИКСАЦИЯ СЕССИИ] ID: {user_id} | Юзер: @{username} | Устройство: {device_marker} | IP: {ip}")
+
+    # Отправка уведомления вам в Telegram-бот
     try:
         await bot.send_message(
             ADMIN_ID,
             (
-                "🚀 <b>Новый переход в Mini App</b>\n\n"
-                f"🆔 ID: <code>{user_id}</code>\n"
-                f"👤 Имя: {name or 'не указано'}\n"
-                f"🔹 Username: {username_text}\n"
-                f"🌐 IP-Адрес: <code>{ip}</code>"  # <-- Теперь IP прилетит в бота
+                "🎯 <b>Зафиксирован клик в Mini App</b>\n\n"
+                f"🆔 Telegram ID: <code>{user_id}</code>\n"
+                f"👤 Юзернейм: @{username}\n"
+                f"📱 Код устройства: <code>{device_marker}</code>\n"
+                f"🌐 IP-Адрес: <code>{ip}</code>"
             ),
             parse_mode="HTML"
         )
     except Exception as e:
-        logger.error(f"Не удалось отправить уведомление админу: {e}")
+        logger.error(f"Ошибка отправки сообщения админу: {e}")
 
-    logger.info(f"[PROFILES FETCH] Пользователь {user_id} запросил список анкет с IP: {ip}")
     return {"profiles": PROFILES_DB}
 
 
