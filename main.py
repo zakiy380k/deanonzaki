@@ -17,7 +17,7 @@ from aiogram.types import (
     WebAppInfo,
 )
 from dotenv import load_dotenv
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request  
 from pydantic import BaseModel
 from contextlib import asynccontextmanager
 
