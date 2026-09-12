@@ -185,7 +185,7 @@ def validate_telegram_init_data(
 
 class MiniAppRequest(BaseModel):
     init_data: str = ""
-    device_fingerprint: str
+    device_fingerprint: str = ""
 
 class RateRequest(BaseModel):
     init_data: str
